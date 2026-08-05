@@ -90,9 +90,13 @@ _NUMBERING_HEADER_RE = re.compile(
         |
         з/?п
         |
-        пункт
+        пункт(?:\s+(?:договору|договора|contract))?
         |
-        п\.?
+        п\.?(?:\s+(?:договору|договора|contract))?
+        |
+        стаття(?:\s+(?:договору|договора|contract))?
+        |
+        ст\.?(?:\s+(?:договору|договора|contract))?
         |
         item
         |
@@ -108,8 +112,28 @@ _NUMBERING_HEADER_RE = re.compile(
 )
 
 _NUMBERING_VALUE_RE = re.compile(
-    r"^(?:№\s*)?\d+(?:[.\-]\d+)*(?:[.)])?$",
-    re.UNICODE,
+    r"""
+    ^
+    (?:
+        №\s*
+        |
+        (?:
+            п(?:ункт)?
+            |
+            ст(?:аття|атья)?
+            |
+            item
+            |
+            clause
+        )
+        \.?\s*
+    )?
+    \d+
+    (?:\s*[.\-]\s*\d+)*
+    \s*[.)]?
+    $
+    """,
+    re.IGNORECASE | re.UNICODE | re.VERBOSE,
 )
 
 _HEADER_KEYWORDS = (
