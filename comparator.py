@@ -52,6 +52,8 @@ _TOKEN_RE = re.compile(
 _SERVICE_LABELS_CASEFOLDED = {
     "Редакція Покупця".casefold(),
     "Редакція Постачальника".casefold(),
+    "Редакція Замовника".casefold(),
+    "Редакція Виконавця".casefold(),
 }
 
 _SERVICE_LABEL_FINAL_PUNCTUATION_RE = re.compile(
