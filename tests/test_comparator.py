@@ -161,12 +161,34 @@ def test_empty_cell_remains_empty():
     assert highlighted_text(row.cells[2]) == ""
 
 
-def test_service_label_is_excluded_with_whitespace_and_optional_period():
-    assert is_excluded_third_label("Редакція Покупця")
-    assert is_excluded_third_label(" \tРедакція\u00A0Покупця.\n")
-    assert is_excluded_third_label("Редакція Постачальника.")
-    assert not is_excluded_third_label("Редакція Покупця..")
-    assert not is_excluded_third_label("Редакція Покупця: текст")
+def test_service_label_is_case_insensitive_and_accepts_one_final_punctuation():
+    accepted = [
+        "Редакція Покупця",
+        "редакція покупця",
+        "РЕДАКЦІЯ ПОКУПЦЯ",
+        " \tРедакція\u00A0Покупця.\n",
+        "редакція постачальника:",
+        "РЕДАКЦІЯ ПОСТАЧАЛЬНИКА;",
+        "Редакція Покупця,",
+        "Редакція Покупця -",
+        "Редакція Покупця–",
+        "Редакція Покупця —",
+        "Редакція Замовника",
+        "редакція замовника:",
+        "РЕДАКЦІЯ ВИКОНАВЦЯ;",
+        "Редакція Виконавця —",
+    ]
+    for value in accepted:
+        assert is_excluded_third_label(value), value
+
+    rejected = [
+        "Редакція Покупця..",
+        "Редакція Покупця:;",
+        "Редакція Покупця: текст",
+        "Редакція Покупця додаткова умова",
+    ]
+    for value in rejected:
+        assert not is_excluded_third_label(value), value
 
 
 def test_service_label_does_not_highlight_base_or_third():
@@ -268,3 +290,42 @@ def test_tokenizer_keeps_hyphenated_and_apostrophe_words_whole():
         "слово-слово",
         "О’Браєн",
     ]
+
+
+def test_case_variant_service_label_leaves_third_cell_completely_unchanged():
+    original_label = " \tрЕдАкЦіЯ\u00A0пОкУпЦя —\n"
+    source = make_docx([
+        (
+            "Оплата 5 днів",
+            "Оплата 10 днів",
+            original_label,
+        ),
+    ])
+    result, stats = process_docx(source)
+
+    row = Document(BytesIO(result)).tables[0].rows[0]
+    assert [highlighted_text(cell) for cell in row.cells] == ["5", "10", ""]
+    assert row.cells[2].text == original_label
+    assert stats.third_labels_excluded == 1
+
+
+def test_new_service_labels_are_excluded_from_third_version():
+    for label in (
+        "Редакція Замовника",
+        "редакція замовника:",
+        "РЕДАКЦІЯ ВИКОНАВЦЯ;",
+        "Редакція Виконавця —",
+    ):
+        source = make_docx([
+            (
+                "Строк 5 днів",
+                "Строк 10 днів",
+                label,
+            ),
+        ])
+        result, stats = process_docx(source)
+
+        row = Document(BytesIO(result)).tables[0].rows[0]
+        assert [highlighted_text(cell) for cell in row.cells] == ["5", "10", ""]
+        assert row.cells[2].text == label
+        assert stats.third_labels_excluded == 1
