@@ -49,10 +49,15 @@ _TOKEN_RE = re.compile(
     re.UNICODE | re.VERBOSE,
 )
 
-_SERVICE_LABELS = {
-    "Редакція Покупця",
-    "Редакція Постачальника",
+_SERVICE_LABELS_CASEFOLDED = {
+    "Редакція Покупця".casefold(),
+    "Редакція Постачальника".casefold(),
 }
+
+_SERVICE_LABEL_FINAL_PUNCTUATION_RE = re.compile(
+    r"\s*[.:;,\-‐‑‒–—−]$",
+    re.UNICODE,
+)
 
 _NUMBERING_HEADER_RE = re.compile(
     r"^(?:№|№\s*п/?п|п/?п|з/?п|номер|пункт|п\.?|item|clause|no\.?|n)$",
@@ -275,10 +280,11 @@ def _normalize_visible_whitespace(text: str) -> str:
 
 
 def is_excluded_third_label(text: str) -> bool:
+    """Check whether the third-version cell contains only a service label."""
     normalized = _normalize_visible_whitespace(text)
-    if normalized.endswith("."):
-        normalized = normalized[:-1].rstrip()
-    return normalized in _SERVICE_LABELS
+    normalized = _SERVICE_LABEL_FINAL_PUNCTUATION_RE.sub("", normalized, count=1)
+    normalized = normalized.rstrip()
+    return normalized.casefold() in _SERVICE_LABELS_CASEFOLDED
 
 
 def _looks_like_numbering_column(table: Table) -> bool:
