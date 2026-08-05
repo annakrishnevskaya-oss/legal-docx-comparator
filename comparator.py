@@ -62,8 +62,49 @@ _SERVICE_LABEL_FINAL_PUNCTUATION_RE = re.compile(
 )
 
 _NUMBERING_HEADER_RE = re.compile(
-    r"^(?:№|№\s*п/?п|п/?п|з/?п|номер|пункт|п\.?|item|clause|no\.?|n)$",
-    re.IGNORECASE,
+    r"""
+    ^
+    (?:
+        №
+        (?:\s*
+            (?:
+                ст(?:\.|атті|атьи)?
+                |
+                п(?:\.|ункт(?:у|а)?)?
+                |
+                п/?п
+                |
+                з/?п
+                |
+                item
+                |
+                clause
+            )
+        )?
+        (?:\s*(?:договору|договора|contract))?
+        \.?
+        |
+        номер(?:\s+(?:статті|статьи|пункту|пункта|договору|договора))?
+        |
+        п/?п
+        |
+        з/?п
+        |
+        пункт
+        |
+        п\.?
+        |
+        item
+        |
+        clause
+        |
+        no\.?
+        |
+        n
+    )
+    $
+    """,
+    re.IGNORECASE | re.VERBOSE,
 )
 
 _NUMBERING_VALUE_RE = re.compile(
@@ -185,15 +226,46 @@ def _block_is_contextual(
     )
 
     # A nearby multi-token anchor supplies enough corresponding context.
-    for other in all_blocks:
-        if other.size < 2:
-            continue
+    anchors = [other for other in all_blocks if other.size >= 2]
+    for other in anchors:
         left_gap = min(abs(i - (other.a - 1)), abs(i - (other.a + other.size)))
         right_gap = min(abs(j - (other.b - 1)), abs(j - (other.b + other.size)))
         if left_gap <= 2 and right_gap <= 2:
             return True
 
+    # A singleton between the same preceding and following anchors is still
+    # contextual even when one side contains a short inserted phrase. This
+    # preserves shared bridge words such as "за" in:
+    # "... ціни не менш, ніж за 14 днів" / "... ціни за 3 дні".
+    previous = [
+        other for other in anchors
+        if other.a + other.size <= i and other.b + other.size <= j
+    ]
+    following = [
+        other for other in anchors
+        if other.a > i and other.b > j
+    ]
+    if previous and following:
+        prev = max(previous, key=lambda other: (other.a + other.size, other.b + other.size))
+        nxt = min(following, key=lambda other: (other.a, other.b))
+        gaps = (
+            i - (prev.a + prev.size),
+            j - (prev.b + prev.size),
+            nxt.a - (i + 1),
+            nxt.b - (j + 1),
+        )
+        if max(gaps) <= 6:
+            return True
+
     if token.kind == "punct":
+        # Sentence-ending punctuation can correspond even when one version
+        # adds or removes a trailing phrase/sentence.
+        if i == left_len - 1 or j == right_len - 1:
+            for other in anchors:
+                left_gap = i - (other.a + other.size)
+                right_gap = j - (other.b + other.size)
+                if 0 <= left_gap <= 6 and 0 <= right_gap <= 6:
+                    return True
         return position_gap <= 0.04 and abs(i - j) <= 1
 
     # Longer words/numbers can stand alone only when their positions correspond
