@@ -610,8 +610,9 @@ def compare_version_cells(
     all_spans[0].extend(base_second)
     all_spans[1].extend(second)
 
+    third_empty = not _normalize_visible_whitespace(texts[2])
     third_excluded = is_excluded_third_label(texts[2])
-    if not third_excluded:
+    if not third_empty and not third_excluded:
         base_third, third = differing_spans(texts[0], texts[2])
         all_spans[0].extend(base_third)
         all_spans[2].extend(third)

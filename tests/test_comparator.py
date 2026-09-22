@@ -62,6 +62,19 @@ def test_second_and_third_are_compared_only_with_base():
     assert [highlighted_text(cell) for cell in row.cells] == ["5", "10", ""]
 
 
+def test_empty_third_version_is_not_compared_with_base():
+    source = make_docx([
+        ("Оплата 5 днів", "Оплата 10 днів", ""),
+        ("Строк 3 дні", "Строк 4 дні", "   \t"),
+    ])
+    result, stats = process_docx(source)
+
+    table = Document(BytesIO(result)).tables[0]
+    assert [highlighted_text(cell) for cell in table.rows[0].cells] == ["5", "10", ""]
+    assert [highlighted_text(cell) for cell in table.rows[1].cells] == ["3", "4", ""]
+    assert stats.third_labels_excluded == 0
+
+
 def test_base_highlight_is_union_of_two_comparisons():
     source = make_docx([
         (
