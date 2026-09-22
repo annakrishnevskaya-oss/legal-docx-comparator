@@ -15,12 +15,14 @@ COMPARISON LOGIC
 
 For each row:
 1. Compare the second version only with the base and highlight differing content in both.
-2. Compare the third version only with the base and highlight differing content in both.
-3. Never compare the second and third versions with each other.
-4. Base-column highlighting is the combined result of the two separate comparisons.
-5. If one additional version matches the base, do not highlight it merely because it differs from the other additional version.
-6. If both additional versions match each other but differ from the base, highlight the corresponding differences in all three version columns.
-7. Complete each row independently.
+2. Before comparing the third version, ignore spaces, non-breaking spaces, tabs, paragraph marks, and line breaks and check whether any text remains.
+3. If the third-version cell is empty after that check, exclude it from comparison for that row. Compare only the base and second versions, do not let the empty third cell cause any highlighting in the base, and leave the third cell unchanged.
+4. If the third-version cell is not empty, compare it only with the base and highlight differing content in both, unless the service-label exception below applies.
+5. Never compare the second and third versions with each other.
+6. Base-column highlighting is the combined result of the participating comparisons.
+7. If one participating additional version matches the base, do not highlight it merely because it differs from the other additional version.
+8. If both additional versions participate, match each other, but differ from the base, highlight the corresponding differences in all three version columns.
+9. Complete each row independently.
 
 SPECIAL THIRD-COLUMN SERVICE LABEL
 
@@ -117,14 +119,15 @@ Before saving, verify that:
 1. Each row was compared independently.
 2. The base was the sole reference.
 3. The second version was compared only with the base.
-4. The third version was compared only with the base.
-5. The second and third versions were never compared with each other.
-6. The service-label exception was checked first, case-insensitively, with optional final punctuation.
-7. Every differing word was highlighted as a complete word.
-8. Every differing number was highlighted as a complete numerical unit.
-9. Matching adjacent text was not highlighted unnecessarily.
-10. Missing text was highlighted only where present.
-11. Only yellow text highlighting was used.
-12. No original wording or visible formatting was changed.
+4. An empty third-version cell was excluded without causing highlighting in the base.
+5. A non-empty participating third version was compared only with the base.
+6. The second and third versions were never compared with each other.
+7. The service-label exception was checked case-insensitively, with optional final punctuation.
+8. Every differing word was highlighted as a complete word.
+9. Every differing number was highlighted as a complete numerical unit.
+10. Matching adjacent text was not highlighted unnecessarily.
+11. Missing text was highlighted only where present in participating versions.
+12. Only yellow text highlighting was used.
+13. No original wording or visible formatting was changed.
 
 Return the edited original document in its original file format. Do not provide a written comparison report or add explanations inside the document.
